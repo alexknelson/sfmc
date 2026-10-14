@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFMC Data Extension Lookup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #ddd;
+    }
+    h2 { color: #16325c; }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      background: #0176d3;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eef5ff;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Data Extension Lookup</h2>
+  <p>Search for a Data Extension using its External Key.</p>
+
+  <form method="POST">
+    <label for="deKey">Data Extension External Key</label>
+    <input type="text" id="deKey" name="deKey"
+           placeholder="Enter External Key" required>
+    <button type="submit">Search</button>
+  </form>
+
+  <script runat="server">
+    Platform.Load("Core", "1");
+
+    function escapeHTML(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    var deKey = Platform.Request.GetFormField("deKey");
+
+    if (deKey && String(deKey).length > 0) {
+      try {
+        var prox = new Script.Util.WSProxy();
+
+        var result = prox.retrieve(
+          "DataExtension",
+          ["Name", "CustomerKey"],
+          {
+            Property: "CustomerKey",
+            SimpleOperator: "equals",
+            Value: deKey
+          }
+        );
+
+        if (result && result.Results &&
+            result.Results.length > 0) {
+
+          Write('<div class="result">');
+          Write('<strong>Data Extension Found!</strong>');
+          Write('<p><strong>Name:</strong> ' +
+            escapeHTML(result.Results[0].Name) + '</p>');
+          Write('<p><strong>External Key:</strong> ' +
+            escapeHTML(result.Results[0].CustomerKey) + '</p>');
+          Write('</div>');
+
+        } else {
+          Write('<div class="result">');
+          Write('No Data Extension found with that key.');
+          Write('</div>');
+        }
+
+      } catch (e) {
+        Write('<div class="result">');
+        Write('Lookup failed. Check the key and permissions.');
+        Write('</div>');
+      }
+    }
+  </script>
+
+</div>
+</body>
+</html>
